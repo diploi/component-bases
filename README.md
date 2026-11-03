@@ -45,8 +45,9 @@ The entrypoint has to start as root to run `initScript`, so a component's chart:
 - sets no `runAsUser` for the pod;
 - sets `args`, never `command`, on containers that use the image, so the entrypoint runs;
 - sets `allowPrivilegeEscalation: false` on every container (`su-exec` only drops privileges, so it keeps working);
-- has a TCP `readinessProbe` on its port in staging and production, so rollouts and builds waiting for it go by
-  whether it serves;
+- takes the port of its own host from `.Values.ports`, found by identifier (the port the Service sends to, also when a
+  project changes it), and uses it for `containerPort`, a TCP `readinessProbe` in staging and production, and a `PORT`
+  env var set last, which the start commands and the dev server listen on;
 - annotates the pod with `diploi.com/exec-user: "1000:1000"`, so terminals and `diploi exec` log in as the app's user
   instead of the root the container starts as;
 - mounts the build folder read-only in the app container in staging and production.
