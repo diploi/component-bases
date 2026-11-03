@@ -1,0 +1,9 @@
+#!/bin/sh
+# Runs the project's initScript (diploi.yaml) as root, then the command as uid 1000. A container that starts as
+# another user runs the command as it is
+set -e
+if [ "$(id -u)" = "0" ]; then
+  if [ -n "${DIPLOI_INIT_SCRIPT:-}" ]; then sh -c "$DIPLOI_INIT_SCRIPT"; fi
+  exec su-exec 1000:1000 "$@"
+fi
+exec "$@"
