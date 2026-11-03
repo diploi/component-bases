@@ -27,7 +27,7 @@ These are what a runtime-built component needs from its image (see "Runtime buil
 A component's `Dockerfile` then needs little more than this:
 
 ```dockerfile
-FROM public.ecr.aws/p8t2q7f4/diploi/component-bases/node26:v1.0.0
+FROM public.ecr.aws/p8t2q7f4/diploi/component-bases/node26:v1
 CMD ["npm", "run", "dev", "--", "--host"]
 ```
 
@@ -45,13 +45,17 @@ The entrypoint has to start as root to run `initScript`, so a component's chart:
 - sets no `runAsUser` for the pod;
 - sets `args`, never `command`, on containers that use the image, so the entrypoint runs;
 - sets `allowPrivilegeEscalation: false` on every container (`su-exec` only drops privileges, so it keeps working);
+- has a TCP `readinessProbe` on its port in staging and production, so rollouts and builds waiting for it go by
+  whether it serves;
+- annotates the pod with `diploi.com/exec-user: "1000:1000"`, so terminals and `diploi exec` log in as the app's user
+  instead of the root the container starts as;
 - mounts the build folder read-only in the app container in staging and production.
 
 ## Releasing
 
-Every push builds the images. A branch is tagged with its name and a git tag with the tag, so `git tag v1.1.0` and a
-push of it publish `node26:v1.1.0`. Components pin an exact tag, and a base change reaches a component when it moves
-to the new tag.
+Every push builds the images. A branch is tagged with its name and a git tag with the tag, so a pushed git tag `v1`
+publishes `node26:v1`. Components use the major tag: a compatible change moves `v1` and reaches a component at its
+next image build, a breaking one gets `v2`, which components move to on purpose.
 
 A new image needs its ECR Public repository (`diploi/component-bases/<identifier>`) before its first push, and an
 entry in the matrix of `.github/workflows/Build.yaml`. Another Node major is one more entry with its `NODE_VERSION`;
