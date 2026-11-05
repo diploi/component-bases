@@ -9,7 +9,7 @@ shift
 if [ ! -f .python-version ]; then export UV_PYTHON="${PYTHON_VERSION:-3.12}"; fi
 
 if [ -f pyproject.toml ]; then
-  uv sync --locked "$@" || uv sync "$@"
+  uv sync "$@"
 elif [ -f requirements.txt ]; then
   uv venv --clear
   uv pip install -r requirements.txt

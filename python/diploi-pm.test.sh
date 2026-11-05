@@ -11,7 +11,6 @@ mkdir "$work/bin"
 cat > "$work/bin/uv" <<'STUB'
 #!/bin/sh
 echo "uv $* [${UV_PYTHON:-uv decides}]"
-case "$*" in *--locked*) [ -z "${LOCKED_FAILS:-}" ] ;; esac
 STUB
 chmod +x "$work/bin/uv"
 
@@ -30,14 +29,12 @@ expect() {
   fi
 }
 
-expect "$(pm 'pyproject.toml' install)" "uv sync --locked [3.12]"
-expect "$(pm 'pyproject.toml' install --no-dev)" "uv sync --locked --no-dev [3.12]"
-expect "$(PYTHON_VERSION=3.13 pm 'pyproject.toml' install)" "uv sync --locked [3.13]"
-expect "$(PYTHON_VERSION=3.13 pm 'pyproject.toml .python-version' install)" "uv sync --locked [uv decides]"
-expect "$(LOCKED_FAILS=1 pm 'pyproject.toml' install --no-dev)" "uv sync --locked --no-dev [3.12]
-uv sync --no-dev [3.12]"
+expect "$(pm 'pyproject.toml' install)" "uv sync [3.12]"
+expect "$(pm 'pyproject.toml' install --no-dev)" "uv sync --no-dev [3.12]"
+expect "$(PYTHON_VERSION=3.13 pm 'pyproject.toml' install)" "uv sync [3.13]"
+expect "$(PYTHON_VERSION=3.13 pm 'pyproject.toml .python-version' install)" "uv sync [uv decides]"
 
-expect "$(pm 'pyproject.toml requirements.txt' install)" "uv sync --locked [3.12]"
+expect "$(pm 'pyproject.toml requirements.txt' install)" "uv sync [3.12]"
 expect "$(pm 'requirements.txt' install --no-dev)" "uv venv --clear [3.12]
 uv pip install -r requirements.txt [3.12]"
 

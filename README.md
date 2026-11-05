@@ -44,8 +44,8 @@ build:
 - [uv](https://docs.astral.sh/uv/) and no Python. uv downloads the version a project asks for when it installs, so any
   version works and there is one image for all of them.
 - **`diploi-pm install`** creates `.venv` in the project's Python version: the one `.python-version` names, else
-  `PYTHON_VERSION`, else 3.12. It installs with `uv sync`, from the lockfile when it can, or from `requirements.txt` in
-  a project without a `pyproject.toml`. Options go to `uv sync`, as in `diploi-pm install --no-dev`. Anything else goes
+  `PYTHON_VERSION`, else 3.12. It installs with `uv sync`, which keeps to the lockfile unless `pyproject.toml` has moved on from it, or from
+  `requirements.txt` in a project without a `pyproject.toml`. Options go to `uv sync`, as in `diploi-pm install --no-dev`. Anything else goes
   to uv as it is, as in `diploi-pm add requests`.
 
 A component's `Dockerfile` then needs little more than this:
