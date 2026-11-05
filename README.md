@@ -81,6 +81,9 @@ The entrypoint has to start as root to run `initScript`, so a component's chart:
 - takes the port of its own host from `.Values.ports`, found by identifier (the port the Service sends to, also when a
   project changes it), and uses it for `containerPort`, a TCP `readinessProbe` in staging and production, and a `PORT`
   env var set last, which the start commands and the dev server listen on;
+- makes the app container wait in staging and production before it stops (`lifecycle.preStop` running `sleep 5`). The proxy
+  keeps sending requests to a stopping pod for a moment, and without the wait a rollout fails some and leaves others
+  hanging. A `sleep` command rather than Kubernetes' own sleep action, which older VMs do not have;
 - annotates the pod with `diploi.com/exec-user: "1000:1000"`, so terminals and `diploi exec` log in as the app's user
   instead of the root the container starts as;
 - mounts the build folder read-only in the app container in staging and production.
