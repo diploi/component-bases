@@ -1,0 +1,18 @@
+#!/bin/sh
+# Runs uv for a Python project. `diploi-pm install` creates .venv in the project's Python version, the one .python-version
+# names, else PYTHON_VERSION, else 3.12, which uv downloads when it has to. Options after install go to uv sync
+# (`diploi-pm install --no-dev`). Anything else goes to uv as it is (`diploi-pm add requests`)
+set -e
+if [ "$1" != "install" ]; then exec uv "$@"; fi
+shift
+
+if [ ! -f .python-version ]; then export UV_PYTHON="${PYTHON_VERSION:-3.12}"; fi
+
+if [ -f pyproject.toml ]; then
+  uv sync --locked "$@" || uv sync "$@"
+elif [ -f requirements.txt ]; then
+  uv venv --clear
+  uv pip install -r requirements.txt
+else
+  echo "No pyproject.toml or requirements.txt, nothing to install"
+fi

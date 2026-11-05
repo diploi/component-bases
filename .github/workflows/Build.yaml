@@ -14,8 +14,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: diploi-pm
+      - name: diploi-pm (Node.js)
         run: sh node/diploi-pm.test.sh
+      - name: diploi-pm (Python)
+        run: sh python/diploi-pm.test.sh
 
   run-builds:
     name: Build ${{ matrix.name }}
@@ -33,6 +35,10 @@ jobs:
             folder: node
             type: main
             buildArgs: NODE_VERSION=26
+          - name: Python
+            identifier: python
+            folder: python
+            type: main
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

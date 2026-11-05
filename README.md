@@ -6,6 +6,7 @@ only what is its own, so the runtime build contract lives in one place.
 | Image                                                   | Folder    | Base             |
 | ------------------------------------------------------- | --------- | ---------------- |
 | `public.ecr.aws/p8t2q7f4/diploi/component-bases/node26` | `node/`   | `node:26-slim`   |
+| `public.ecr.aws/p8t2q7f4/diploi/component-bases/python` | `python/` | uv on Debian     |
 
 ## What every base has
 
@@ -38,6 +39,38 @@ build:
   command: diploi-pm install && NODE_ENV=production diploi-pm run build
 ```
 
+## Python
+
+- [uv](https://docs.astral.sh/uv/) and no Python. uv downloads the version a project asks for when it installs, so any
+  version works and there is one image for all of them.
+- **`diploi-pm install`** creates `.venv` in the project's Python version: the one `.python-version` names, else
+  `PYTHON_VERSION`, else 3.12. It installs with `uv sync`, from the lockfile when it can, or from `requirements.txt` in
+  a project without a `pyproject.toml`. Options go to `uv sync`, as in `diploi-pm install --no-dev`. Anything else goes
+  to uv as it is, as in `diploi-pm add requests`.
+
+A component's `Dockerfile` then needs little more than this:
+
+```dockerfile
+FROM public.ecr.aws/p8t2q7f4/diploi/component-bases/python:v1
+```
+
+Its `diploi.yaml` installs with `diploi-pm`. Compiling the bytecode here matters, because the app cannot write it later
+into the read-only build folder:
+
+```yaml
+build:
+  command: UV_COMPILE_BYTECODE=1 diploi-pm install --no-dev
+  waitForImports: false
+```
+
+Besides what every chart does (below), a Python chart sets two env vars:
+
+- `UV_PYTHON_INSTALL_DIR` to `/app{{ .Values.folder }}/.python` on the containers that install and the app. `.venv` links
+  to that Python, so it has to be in the project folder: the build container's disk is gone after the build, and in
+  development the devpod uses the same `.venv`.
+- `PATH` on the app container, with `/app{{ .Values.folder }}/.venv/bin` first, so start commands and terminals find the
+  project's `python` and tools. The base image cannot know the folder.
+
 ## Charts
 
 The entrypoint has to start as root to run `initScript`, so a component's chart:
@@ -60,9 +93,10 @@ next image build, a breaking one gets `v2`, which components move to on purpose.
 
 A new image needs its ECR Public repository (`diploi/component-bases/<identifier>`) before its first push, and an
 entry in the matrix of `.github/workflows/Build.yaml`. Another Node major is one more entry with its `NODE_VERSION`;
-the Bun version is `BUN_VERSION` in `node/Dockerfile`.
+the Bun version is `BUN_VERSION` in `node/Dockerfile`, and the uv version is `UV_VERSION` in `python/Dockerfile`.
 
 ## Tests
 
-`sh node/diploi-pm.test.sh` checks which package manager `diploi-pm` picks and what it runs. The workflow runs it
-before the builds.
+`sh node/diploi-pm.test.sh` checks which package manager `diploi-pm` picks and what it runs, and
+`sh python/diploi-pm.test.sh` checks which Python version it asks for and what it runs. The workflow runs both before
+the builds.
