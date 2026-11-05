@@ -7,6 +7,9 @@ ARG BUN_VERSION=1.4.4
 FROM oven/bun:${BUN_VERSION} AS bun
 FROM node:${NODE_VERSION}-slim
 
+# apt-get in an initScript has no terminal, and debconf would fill the logs saying so
+ENV DEBIAN_FRONTEND=noninteractive
+
 # su-exec (gosu here) drops to uid 1000 after the work that needs root, and curl lets a build wait for the components
 # it depends on
 RUN apt-get update \
